@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}提交问题{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:640px;">
+    <h1 class="h4 fw-bold mb-2">提交未解决的问题</h1>
+    <p class="text-secondary mb-4">搜索不到答案？告诉我们你想知道什么，我们会尽快补充</p>
+
+    {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+    <form method="POST" class="card-plain">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="question" class="form-label fw-semibold">你想咨询的问题 <span class="text-danger">*</span></label>
+            <input type="text" name="question" id="question" class="form-control" maxlength="200" required
+                   placeholder="例如：大一可以转专业吗？" value="{{ request.GET.q|default:'' }}">
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label fw-semibold">补充说明（可选）</label>
+            <textarea name="description" id="description" class="form-control" rows="3" maxlength="500"
+                      placeholder="更多背景信息，帮我们更好地回答"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> 提交问题</button>
+        <p class="text-secondary mt-2 mb-0" style="font-size:.8rem;">不需要填写姓名和联系方式，仅记录问题内容</p>
+    </form>
+</div>
+{% endblock %}

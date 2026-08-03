@@ -1,0 +1,146 @@
+{% extends 'base.html' %}{% load knowledge_tags %}
+{% block title %}{{ item.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav class="breadcrumb mb-3">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">首页</a></li>
+        {% if item.category %}<li class="breadcrumb-item"><a href="{% url 'category_detail' item.category.slug %}">{{ item.category.name }}</a></li>{% endif %}
+        <li class="breadcrumb-item active">{{ item.title }}</li>
+    </nav>
+
+    <article>
+        <header class="detail-header">
+            <h1>{{ item.title }}</h1>
+            <div class="detail-meta">
+                {% if item.information_type == 'official' %}<span class="badge-official">官方资料</span>
+                {% elif item.information_type == 'experience' %}<span class="badge-experience">经验分享，仅供参考</span>
+                {% elif item.information_type == 'curated' %}<span class="badge-curated">管理员整理</span>
+                {% else %}<span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-size:.72rem;padding:.15rem .5rem;border-radius:999px;">普通参考</span>{% endif %}
+                {% if item.category %}<span><i class="bi bi-folder"></i> {{ item.category.name }}</span>{% endif %}
+                <span><i class="bi bi-clock"></i> {{ item.updated_at|date:"Y-m-d" }}</span>
+                <span><i class="bi bi-eye"></i> {{ item.view_count }} 次浏览</span>
+            </div>
+        </header>
+
+        {% if item.is_expired %}
+        <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-exclamation-triangle-fill"></i> 该信息较长时间未核验，请结合学校最新通知确认
+        </div>
+        {% endif %}
+
+        {% if item.verified_at %}
+        <div class="text-secondary mb-3" style="font-size:.85rem;">最后核验：{{ item.verified_at|date:"Y年n月j日" }}</div>
+        {% endif %}
+
+        <div class="answer-card answer-card-short">
+            <div class="card-label">简短答案</div>
+            <p class="mb-0" style="font-size:1rem;">{{ item.short_answer }}</p>
+        </div>
+
+        {% if item.detailed_answer %}
+        <div class="answer-card">
+            <div class="card-label">详细解答</div>
+            <div class="detailed-content">{{ item.detailed_answer|render_markdown }}</div>
+        </div>
+        {% endif %}
+
+        {% if item.source_name %}
+        <div class="source-info mb-3">
+            <i class="bi bi-info-circle"></i> 来源：
+            {% if item.source_url %}
+            <a href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer nofollow">{{ item.source_name }} <i class="bi bi-box-arrow-up-right"></i></a>
+            {% else %}{{ item.source_name }}{% endif %}
+        </div>
+        {% endif %}
+
+        {% if item.keywords %}
+        <div class="mb-3">
+            {% for kw in item.keywords.split %}
+            <a href="{% url 'search' %}?q={{ kw|urlencode }}" class="keyword-tag">#{{ kw }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </article>
+
+    <div class="feedback-box">
+        <div class="fb-title">这条内容对你有帮助吗？</div>
+        <div class="d-flex justify-content-center gap-3">
+            <button class="btn btn-helpful" onclick="submitFeedback(true)" id="btn-helpful"><i class="bi bi-hand-thumbs-up"></i> 有帮助</button>
+            <button class="btn btn-unhelpful" onclick="submitFeedback(false)" id="btn-unhelpful"><i class="bi bi-hand-thumbs-down"></i> 没有帮助</button>
+        </div>
+        <div id="feedback-thanks" class="text-success mt-2 d-none" style="font-size:.9rem;"><i class="bi bi-check-circle-fill"></i> 感谢你的反馈！</div>
+        <div id="feedback-error" class="text-danger mt-2 d-none" style="font-size:.85rem;"></div>
+    </div>
+
+    {% if related_items %}
+    <div class="related-section">
+        <div class="section-title"><i class="bi bi-link-45deg"></i> 相关问题</div>
+        {% for rel in related_items %}
+        <a href="{% url 'question_detail' rel.pk %}" class="related-item">{{ rel.title }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<div class="modal fade" id="commentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius:var(--radius);">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" style="font-size:1rem;">可以告诉我们哪里没有帮助吗？</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <textarea id="feedback-comment" class="form-control" rows="3" maxlength="500" placeholder="（可选填写）"></textarea>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">跳过</button>
+                <button type="button" class="btn btn-primary" id="btn-submit-comment">提交</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% csrf_token %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let pendingHelpful = null;
+    const commentModal = new bootstrap.Modal(document.getElementById('commentModal'));
+    function submitFeedback(isHelpful) {
+        if (isHelpful === false) { commentModal.show(); return; }
+        sendFeedback(true, '');
+    }
+    document.getElementById('btn-submit-comment').addEventListener('click', function() {
+        commentModal.hide();
+        sendFeedback(false, document.getElementById('feedback-comment').value);
+    });
+    function sendFeedback(isHelpful, comment) {
+        const btnH = document.getElementById('btn-helpful');
+        const btnU = document.getElementById('btn-unhelpful');
+        btnH.disabled = true; btnU.disabled = true;
+        fetch('{% url 'submit_feedback' item.pk %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'is_helpful=' + isHelpful + '&comment=' + encodeURIComponent(comment),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) { document.getElementById('feedback-thanks').classList.remove('d-none'); }
+            else {
+                document.getElementById('feedback-error').textContent = data.msg || '提交失败';
+                document.getElementById('feedback-error').classList.remove('d-none');
+                btnH.disabled = false; btnU.disabled = false;
+            }
+        })
+        .catch(() => {
+            document.getElementById('feedback-error').textContent = '网络错误，请稍后重试';
+            document.getElementById('feedback-error').classList.remove('d-none');
+            btnH.disabled = false; btnU.disabled = false;
+        });
+    }
+</script>
+{% endblock %}

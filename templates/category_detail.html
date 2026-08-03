@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}{{ category.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav class="breadcrumb mb-3">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">首页</a></li>
+        <li class="breadcrumb-item active">{{ category.name }}</li>
+    </nav>
+
+    <h1 class="h4 fw-bold mb-1">{{ category.name }}</h1>
+    {% if category.description %}<p class="text-secondary small mb-4">{{ category.description }}</p>{% endif %}
+
+    {% if items %}
+    {% for item in items %}
+    <a href="{% url 'question_detail' item.pk %}" class="question-card">
+        <div class="q-title">
+            {% if item.information_type == 'official' %}<span class="badge-official me-1">官方</span>
+            {% elif item.information_type == 'experience' %}<span class="badge-experience me-1">经验</span>{% endif %}
+            {{ item.title }}
+        </div>
+        <div class="q-preview">{{ item.short_answer|truncatechars:120 }}</div>
+        <div class="q-meta"><span>{{ item.updated_at|date:"Y-m-d" }}</span></div>
+    </a>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state"><p class="text-secondary">该分类下暂无内容</p></div>
+    {% endif %}
+</div>
+{% endblock %}

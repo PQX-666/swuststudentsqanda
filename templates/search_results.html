@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}搜索「{{ query }}」{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <form action="{% url 'search' %}" method="GET" class="search-page-bar mb-4">
+        <div class="input-group input-group-lg">
+            <input type="text" name="q" class="form-control"
+                   value="{{ query }}" placeholder="搜索 转专业、宿舍、军训……"
+                   maxlength="100" autocomplete="off">
+            <button type="submit"><i class="bi bi-search"></i> 搜索</button>
+        </div>
+    </form>
+
+    {% if query %}
+    <div class="search-summary">
+        搜索「<strong>{{ query }}</strong>」{% if result_count > 0 %}，找到 <strong>{{ result_count }}</strong> 条结果{% endif %}
+    </div>
+
+    {% if results %}
+    {% for item in results %}
+    <a href="{% url 'question_detail' item.pk %}" class="question-card">
+        <div class="q-title">
+            {% if item.information_type == 'official' %}<span class="badge-official me-1">官方</span>
+            {% elif item.information_type == 'experience' %}<span class="badge-experience me-1">经验</span>{% endif %}
+            {{ item.title }}
+        </div>
+        <div class="q-preview">{{ item.short_answer|truncatechars:150 }}</div>
+        <div class="q-meta">
+            {% if item.category %}<span><i class="bi bi-folder"></i> {{ item.category.name }}</span>{% endif %}
+            <span>{{ item.updated_at|date:"Y-m-d" }}</span>
+            <span>{{ item.view_count }} 浏览</span>
+        </div>
+    </a>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon"><i class="bi bi-search"></i></div>
+        <h2>暂时没有找到相关答案</h2>
+        <p>你可以提交这个问题，我们会继续补充</p>
+        <a href="{% url 'submit_question' %}?q={{ query|urlencode }}" class="btn btn-primary">
+            <i class="bi bi-send"></i> 提交问题
+        </a>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

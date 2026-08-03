@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}SWUST 新生指南 - 首页{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+    <div class="container text-center">
+        <h1>新生有问题，先来这里搜一搜</h1>
+        <p class="lead mb-4">报到、宿舍、军训、选课、转专业……你想知道的都在这里</p>
+        <form action="{% url 'search' %}" method="GET" class="search-form mx-auto">
+            <div class="input-group input-group-lg">
+                <input type="text" name="q" class="form-control"
+                       placeholder="搜索 转专业、宿舍、军训、电脑、选课……"
+                       maxlength="100" autocomplete="off">
+                <button type="submit"><i class="bi bi-search"></i> 搜索</button>
+            </div>
+        </form>
+        {% if popular_keywords %}
+        <div class="hot-tags mt-3">
+            {% for kw in popular_keywords|slice:":8" %}
+            <a href="{% url 'search' %}?q={{ kw.keyword|urlencode }}" class="me-1 mb-1">{{ kw.keyword }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<div class="stats-bar">
+    <div class="container">
+        <div class="row g-0">
+            <div class="col-6 col-md-3 stat-item">
+                <div class="stat-icon" style="background:#eff6ff;color:#2563eb;"><i class="bi bi-journal-text"></i></div>
+                <div class="stat-num">{{ stats.total_published }}</div>
+                <div class="stat-label">个问题已整理</div>
+            </div>
+            <div class="col-6 col-md-3 stat-item">
+                <div class="stat-icon" style="background:#f0fdf4;color:#16a34a;"><i class="bi bi-grid"></i></div>
+                <div class="stat-num">{{ stats.total_categories }}</div>
+                <div class="stat-label">个分类</div>
+            </div>
+            <div class="col-6 col-md-3 stat-item">
+                <div class="stat-icon" style="background:#fef3c7;color:#d97706;"><i class="bi bi-search"></i></div>
+                <div class="stat-num">{{ stats.total_searches }}</div>
+                <div class="stat-label">次搜索</div>
+            </div>
+            <div class="col-6 col-md-3 stat-item">
+                <div class="stat-icon" style="background:#fce7f3;color:#db2777;"><i class="bi bi-hand-thumbs-up"></i></div>
+                <div class="stat-num">{{ stats.total_helpful }}</div>
+                <div class="stat-label">次有帮助反馈</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <div class="section-title"><i class="bi bi-folder2-open"></i> 按分类浏览</div>
+    <div class="category-grid mb-4">
+        {% for cat in categories %}
+        <a href="{% url 'category_detail' cat.slug %}" class="category-card cat-{{ cat.slug }}">
+            <span class="category-icon">
+                {% if '报到' in cat.name %}<i class="bi bi-backpack"></i>
+                {% elif '宿舍' in cat.name %}<i class="bi bi-house-door"></i>
+                {% elif '军训' in cat.name %}<i class="bi bi-sun"></i>
+                {% elif '选课' in cat.name %}<i class="bi bi-pencil-square"></i>
+                {% elif '转专业' in cat.name %}<i class="bi bi-arrow-left-right"></i>
+                {% elif '学习' in cat.name %}<i class="bi bi-book"></i>
+                {% elif '电脑' in cat.name %}<i class="bi bi-laptop"></i>
+                {% elif '社团' in cat.name %}<i class="bi bi-people"></i>
+                {% elif '奖学金' in cat.name or '资助' in cat.name %}<i class="bi bi-award"></i>
+                {% elif '校园' in cat.name %}<i class="bi bi-building"></i>
+                {% else %}<i class="bi bi-folder"></i>
+                {% endif %}
+            </span>
+            {{ cat.name }}
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if popular_items or featured_items or recent_items %}
+    <div class="two-col">
+        {% if popular_items %}
+        <div>
+            <div class="section-title"><i class="bi bi-fire"></i> 热门问题</div>
+            {% for item in popular_items|slice:":5" %}
+            <a href="{% url 'question_detail' item.pk %}" class="question-card">
+                <div class="q-title">
+                    {% if item.information_type == 'official' %}<span class="badge-official me-1">官方</span>
+                    {% elif item.information_type == 'experience' %}<span class="badge-experience me-1">经验</span>{% endif %}
+                    {{ item.title }}
+                </div>
+                <div class="q-meta"><span><i class="bi bi-eye"></i> {{ item.view_count }}</span></div>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div>
+            {% if featured_items %}
+            <div class="section-title"><i class="bi bi-star"></i> 推荐阅读</div>
+            {% for item in featured_items|slice:":5" %}
+            <a href="{% url 'question_detail' item.pk %}" class="question-card">
+                <div class="q-title">{{ item.title }}</div>
+                <div class="q-preview">{{ item.short_answer|truncatechars:60 }}</div>
+            </a>
+            {% endfor %}
+            {% endif %}
+
+            {% if recent_items %}
+            <div class="section-title mt-3"><i class="bi bi-clock-history"></i> 最近更新</div>
+            {% for item in recent_items|slice:":5" %}
+            <a href="{% url 'question_detail' item.pk %}" class="question-card">
+                <div class="q-title">{{ item.title }}</div>
+                <div class="q-meta"><span>{{ item.updated_at|date:"Y-m-d" }}</span></div>
+            </a>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}关于与免责声明{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:720px;">
+    <h1 class="h4 fw-bold mb-4">关于与免责声明</h1>
+
+    <div class="card-plain">
+        <h2><i class="bi bi-info-circle text-primary me-2"></i>关于本站</h2>
+        <p class="text-secondary mb-0" style="font-size:.9rem;">SWUST 新生指南是一个面向西南科技大学新生的信息检索平台，帮助新生快速找到入学、学习、生活等常见问题的答案。内容由管理员整理自学校官方信息和学长学姐经验分享。本站为个人独立运营，并非学校官方系统。</p>
+    </div>
+
+    <div class="card-plain">
+        <h2><i class="bi bi-shield-exclamation text-warning me-2"></i>免责声明</h2>
+        <ul class="text-secondary mb-0" style="font-size:.9rem;">
+            <li>本站内容仅供参考，以学校官方最新通知为准</li>
+            <li>涉及时间、费用、政策等关键信息，请通过学校官方渠道核实</li>
+            <li>"学长学姐经验"类内容属于个人经验分享，不代表学校立场</li>
+            <li>本站对因使用本站内容产生的后果不承担责任</li>
+        </ul>
+    </div>
+
+    <div class="card-plain">
+        <h2><i class="bi bi-shield-check text-success me-2"></i>隐私说明</h2>
+        <ul class="text-secondary mb-0" style="font-size:.9rem;">
+            <li><strong>不会收集</strong>：姓名、手机号、身份证号、学号等个人敏感信息</li>
+            <li><strong>会自动记录</strong>：搜索关键词、时间、浏览行为，仅用于改进内容</li>
+            <li><strong>IP 地址</strong>：仅用于基础统计，不与个人身份关联</li>
+            <li>不使用 Cookies 进行用户追踪或广告投放</li>
+        </ul>
+    </div>
+
+    <div class="card-plain text-center">
+        <div class="row g-3">
+            <div class="col-4">
+                <div class="fw-bold" style="font-size:1.5rem;color:var(--primary);">{{ stats.total_published }}</div>
+                <small class="text-secondary">已整理问题</small>
+            </div>
+            <div class="col-4">
+                <div class="fw-bold" style="font-size:1.5rem;color:var(--primary);">{{ stats.total_searches }}</div>
+                <small class="text-secondary">总搜索次数</small>
+            </div>
+            <div class="col-4">
+                <div class="fw-bold" style="font-size:1.5rem;color:var(--primary);">{{ stats.total_helpful }}</div>
+                <small class="text-secondary">有帮助反馈</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

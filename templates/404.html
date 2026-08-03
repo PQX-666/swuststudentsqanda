@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}页面不存在 - SWUST 新生指南{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div style="font-size: 5rem;">📖</div>
+    <h1 class="h3 mt-3">页面不存在</h1>
+    <p class="text-muted">你访问的页面可能已被移除，或从未存在过。</p>
+    <a href="{% url 'home' %}" class="btn btn-primary">返回首页</a>
+</div>
+{% endblock %}
