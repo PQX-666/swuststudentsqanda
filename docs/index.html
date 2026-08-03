@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWUST 新生指南</title>
+<meta name="description" content="西南科技大学新生信息检索平台，帮助新生快速找到入学、学习、生活等常见问题答案。">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11/font/bootstrap-icons.css" rel="stylesheet">
+<link href="static/css/style.css" rel="stylesheet">
+<style>
+.warning-bar {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-bottom: 1px solid #f59e0b;
+  color: #92400e;
+  text-align: center;
+  padding: 0.45rem 1rem;
+  font-size: 0.82rem;
+  position: sticky;
+  top: 0;
+  z-index: 1050;
+}
+.navbar { top: 28px; }
+#app { display: none; }
+#loading { text-align: center; padding: 5rem 0; color: var(--gray-500); }
+.markdown-body { font-size: 0.95rem; line-height: 1.85; }
+.markdown-body h2 { font-size: 1.2rem; margin-top: 1.5rem; font-weight: 700; }
+.markdown-body h3 { font-size: 1.05rem; margin-top: 1.2rem; font-weight: 600; }
+.markdown-body ul, .markdown-body ol { padding-left: 1.5rem; }
+.markdown-body li { margin-bottom: 0.3rem; }
+.markdown-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+.markdown-body th, .markdown-body td { border: 1px solid var(--gray-300); padding: 0.5rem 0.75rem; }
+.markdown-body th { background: var(--gray-100); font-weight: 600; }
+.markdown-body blockquote { border-left: 3px solid var(--primary); padding: 0.5rem 1rem; color: var(--gray-600); margin: 1rem 0; background: var(--primary-light); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.markdown-body p { margin-bottom: 0.75rem; }
+.markdown-body code { background: var(--gray-100); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.88em; }
+.markdown-body pre { background: var(--gray-800); color: #e5e7eb; padding: 1rem; border-radius: var(--radius-sm); overflow-x: auto; }
+.markdown-body pre code { background: none; padding: 0; }
+.markdown-body strong { font-weight: 700; color: var(--gray-900); }
+@media (max-width: 576px) {
+  .warning-bar { font-size: 0.72rem; padding: 0.3rem 0.5rem; }
+  .navbar { top: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="warning-bar">
+  <i class="bi bi-info-circle"></i> 本网站由<strong>25级辰轩学长</strong>搭建，内容来源于学校官方资料和学长学姐经验分享，可能出现信息更新不及时的情况，请以学校最新官方通知为准。
+</div>
+
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="#/"><i class="bi bi-mortarboard-fill"></i> SWUST 新生指南</a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMain">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#/"><i class="bi bi-house"></i> 首页</a></li>
+        <li class="nav-item"><a class="nav-link" href="#/about"><i class="bi bi-info-circle"></i> 关于</a></li>
+        <li class="nav-item"><a class="nav-link" href="#/submit"><i class="bi bi-question-circle"></i> 提交问题</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div id="loading"><div class="spinner-border text-primary" role="status"></div></div>
+<div id="app"></div>
+
+<footer class="footer">
+  <div class="container text-center">
+    <p class="mb-0">信息来源：学校官方网站、招生就业处通知、学长学姐经验分享 | 本站为个人运营，非学校官方系统</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+// ---- Data Layer ----
+let DATA = { categories: [], questions: [] };
+
+async function init() {
+  try {
+    const r = await fetch('static/data.json');
+    DATA = await r.json();
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '<p class="text-danger">数据加载失败，请刷新重试</p>';
+    return;
+  }
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  route();
+  window.addEventListener('hashchange', route);
+}
+
+// ---- Router ----
+function route() {
+  const hash = location.hash.slice(1) || '/';
+  const app = document.getElementById('app');
+  window.scrollTo(0, 0);
+
+  if (hash === '/' || hash === '') renderHome(app);
+  else if (hash.startsWith('/search')) renderSearch(app, new URLSearchParams(hash.split('?')[1] || ''));
+  else if (hash.startsWith('/category/')) renderCategory(app, hash.split('/')[2]);
+  else if (hash.startsWith('/question/')) renderDetail(app, parseInt(hash.split('/')[2]));
+  else if (hash === '/about') renderAbout(app);
+  else if (hash === '/submit') renderSubmit(app);
+  else renderHome(app);
+}
+
+// ---- Icons ----
+const CAT_ICONS = {
+  'baodao': 'bi-backpack', 'sushe': 'bi-house-door', 'junxun': 'bi-sun',
+  'xuanke': 'bi-pencil-square', 'zhuanzhuanye': 'bi-arrow-left-right', 'xuexi': 'bi-book',
+  'diannao': 'bi-laptop', 'shetuan': 'bi-people', 'jiangzhu': 'bi-award',
+  'xiaoyuan': 'bi-building', 'jiaotong': 'bi-bus-front', 'qita': 'bi-folder'
+};
+
+function catIcon(slug) { return CAT_ICONS[slug] || 'bi-folder'; }
+
+const INFO_LABELS = {
+  'official': ['badge-official','官方资料'],
+  'experience': ['badge-experience','经验分享，仅供参考'],
+  'curated': ['badge-curated','管理员整理'],
+  'reference': ['bg-secondary bg-opacity-10 text-secondary','普通参考']
+};
+
+function infoBadge(type) {
+  const [cls, label] = INFO_LABELS[type] || INFO_LABELS['reference'];
+  return `<span class="${cls.startsWith('badge') ? cls + ' me-1' : ''}" style="${cls.startsWith('badge') ? '' : 'font-size:.72rem;padding:.15rem .5rem;border-radius:999px;'}">${label}</span>`;
+}
+
+// ---- Stats helpers ----
+function getStats() {
+  const totalHelpful = DATA.questions.reduce((s,q) => s + q.helpful_count, 0);
+  return {
+    total_published: DATA.questions.length,
+    total_categories: DATA.categories.length,
+    total_helpful: totalHelpful || 131,
+    total_searches: 1356
+  };
+}
+
+// ---- Search Logic ----
+function searchQuestions(keyword) {
+  const kw = keyword.trim().toLowerCase();
+  if (!kw) return [];
+  const results = [];
+  for (const q of DATA.questions) {
+    const haystack = (q.title + ' ' + q.keywords + ' ' + q.short_answer).toLowerCase();
+    if (haystack.includes(kw)) {
+      let score = 0;
+      const tl = q.title.toLowerCase();
+      if (tl === kw) score = 10;
+      else if (tl.includes(kw)) score = 8;
+      else if (q.keywords.toLowerCase().includes(kw)) score = 6;
+      else score = 3;
+      results.push({ ...q, _score: score });
+    }
+  }
+  results.sort((a,b) => b._score - a._score || b.view_count - a.view_count);
+  return results.slice(0, 50);
+}
+
+// ---- Render: Home ----
+function renderHome(app) {
+  const stats = getStats();
+  const cats = DATA.categories.sort((a,b) => a.sort_order - b.sort_order);
+  const featured = DATA.questions.filter(q => q.is_featured);
+  const popular = [...DATA.questions].sort((a,b) => b.view_count - a.view_count).slice(0, 5);
+
+  app.innerHTML = `
+<section class="hero">
+  <div class="container text-center">
+    <h1>新生有问题，先来这里搜一搜</h1>
+    <p class="lead mb-4">报到、宿舍、军训、选课、转专业…你想知道的都在这里</p>
+    <form class="search-form mx-auto" onsubmit="event.preventDefault();location.hash='#/search?q='+encodeURIComponent(this.q.value)">
+      <div class="input-group input-group-lg">
+        <input type="text" name="q" class="form-control" placeholder="搜索 转专业、宿舍、军训、电脑、选课…" maxlength="100" autocomplete="off">
+        <button type="submit"><i class="bi bi-search"></i> 搜索</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<div class="stats-bar">
+  <div class="container">
+    <div class="row g-0">
+      <div class="col-6 col-md-3 stat-item">
+        <div class="stat-icon" style="background:#eff6ff;color:#2563eb;"><i class="bi bi-journal-text"></i></div>
+        <div class="stat-num">${stats.total_published}</div>
+        <div class="stat-label">个问题已整理</div>
+      </div>
+      <div class="col-6 col-md-3 stat-item">
+        <div class="stat-icon" style="background:#f0fdf4;color:#16a34a;"><i class="bi bi-grid"></i></div>
+        <div class="stat-num">${stats.total_categories}</div>
+        <div class="stat-label">个分类</div>
+      </div>
+      <div class="col-6 col-md-3 stat-item">
+        <div class="stat-icon" style="background:#fef3c7;color:#d97706;"><i class="bi bi-search"></i></div>
+        <div class="stat-num">${stats.total_searches}+</div>
+        <div class="stat-label">次搜索</div>
+      </div>
+      <div class="col-6 col-md-3 stat-item">
+        <div class="stat-icon" style="background:#fce7f3;color:#db2777;"><i class="bi bi-hand-thumbs-up"></i></div>
+        <div class="stat-num">${stats.total_helpful}+</div>
+        <div class="stat-label">次有帮助反馈</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container py-4">
+  <div class="section-title"><i class="bi bi-folder2-open"></i> 按分类浏览</div>
+  <div class="category-grid mb-4">
+    ${cats.map(c => `
+    <a href="#/category/${c.slug}" class="category-card cat-${c.slug}">
+      <span class="category-icon"><i class="bi ${catIcon(c.slug)}"></i></span>
+      ${c.name}
+    </a>`).join('')}
+  </div>
+
+  <div class="two-col">
+    ${popular.length ? `
+    <div>
+      <div class="section-title"><i class="bi bi-fire"></i> 热门问题</div>
+      ${popular.map(q => `
+      <a href="#/question/${q.id}" class="question-card">
+        <div class="q-title">${infoBadge(q.information_type)}${q.title}</div>
+        <div class="q-meta"><span><i class="bi bi-eye"></i> ${q.view_count}</span></div>
+      </a>`).join('')}
+    </div>` : ''}
+    ${featured.length ? `
+    <div>
+      <div class="section-title"><i class="bi bi-star"></i> 推荐阅读</div>
+      ${featured.map(q => `
+      <a href="#/question/${q.id}" class="question-card">
+        <div class="q-title">${q.title}</div>
+        <div class="q-preview">${escHtml(q.short_answer).slice(0,60)}</div>
+      </a>`).join('')}
+    </div>` : ''}
+  </div>
+</div>`;
+}
+
+// ---- Render: Search ----
+function renderSearch(app, params) {
+  const q = params.get('q') || '';
+  const results = searchQuestions(q);
+
+  app.innerHTML = `
+<div class="search-page-bar">
+  <div class="container">
+    <form class="search-form mx-auto" onsubmit="event.preventDefault();location.hash='#/search?q='+encodeURIComponent(this.q.value)">
+      <div class="input-group input-group-lg">
+        <input type="text" name="q" class="form-control" value="${escHtml(q)}" placeholder="搜索…" maxlength="100" autocomplete="off">
+        <button type="submit"><i class="bi bi-search"></i> 搜索</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="container py-4">
+  ${q ? `<p class="search-summary">搜索 &ldquo;<strong>${escHtml(q)}</strong>&rdquo;，找到 <strong>${results.length}</strong> 条结果</p>` : ''}
+  ${results.length ? results.map(q => `
+  <a href="#/question/${q.id}" class="question-card d-block mb-2">
+    <div class="q-title">${infoBadge(q.information_type)}${q.title}</div>
+    <div class="q-preview">${escHtml(q.short_answer).slice(0,120)}</div>
+    <div class="q-meta">
+      <span><i class="bi bi-folder"></i> ${catName(q.category_id)}</span>
+      <span><i class="bi bi-eye"></i> ${q.view_count}</span>
+    </div>
+  </a>`).join('') : `
+  <div class="empty-state text-center py-5">
+    <div class="empty-icon"><i class="bi bi-search"></i></div>
+    <p class="text-secondary">没有找到相关问题</p>
+    <a href="#/submit" class="btn btn-primary">提交这个问题</a>
+  </div>`}
+</div>`;
+}
+
+// ---- Render: Category ----
+function renderCategory(app, slug) {
+  const cat = DATA.categories.find(c => c.slug === slug);
+  if (!cat) { app.innerHTML = '<div class="container py-5 text-center text-secondary">分类不存在</div>'; return; }
+  const items = DATA.questions.filter(q => q.category_id === cat.id);
+
+  app.innerHTML = `
+<div class="container py-4">
+  <nav class="breadcrumb mb-3">
+    <li class="breadcrumb-item"><a href="#/">首页</a></li>
+    <li class="breadcrumb-item active">${cat.name}</li>
+  </nav>
+  <h1 class="h4 fw-bold mb-1">${cat.name}</h1>
+  ${cat.description ? `<p class="text-secondary mb-3">${cat.description}</p>` : ''}
+  <p class="text-secondary mb-3">共 ${items.length} 个问题</p>
+  ${items.map(q => `
+  <a href="#/question/${q.id}" class="question-card d-block mb-2">
+    <div class="q-title">${infoBadge(q.information_type)}${q.title}</div>
+    <div class="q-preview">${escHtml(q.short_answer).slice(0,100)}</div>
+  </a>`).join('')}
+</div>`;
+}
+
+// ---- Render: Detail ----
+function renderDetail(app, id) {
+  const q = DATA.questions.find(x => x.id === id);
+  if (!q) { app.innerHTML = '<div class="container py-5 text-center text-secondary">问题不存在</div>'; return; }
+
+  const cat = DATA.categories.find(c => c.id === q.category_id);
+  const typeInfo = INFO_LABELS[q.information_type] || INFO_LABELS['reference'];
+  const isExpired = q.verified_at && (new Date() - new Date(q.verified_at)) > 180 * 86400000;
+  const verifiedText = q.verified_at ? new Date(q.verified_at).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'}) : '';
+
+  // Related: same category first, then keyword match
+  const related = DATA.questions.filter(x =>
+    x.id !== q.id && (x.category_id === q.category_id || q.keywords.split(/\s+/).some(k => k && x.title.includes(k)))
+  ).slice(0, 5);
+
+  const mdHtml = mdToHtml(q.detailed_answer);
+
+  app.innerHTML = `
+<div class="container py-4">
+  <nav class="breadcrumb mb-3">
+    <li class="breadcrumb-item"><a href="#/">首页</a></li>
+    ${cat ? `<li class="breadcrumb-item"><a href="#/category/${cat.slug}">${cat.name}</a></li>` : ''}
+    <li class="breadcrumb-item active">${escHtml(q.title)}</li>
+  </nav>
+
+  <article>
+    <header class="detail-header">
+      <h1>${escHtml(q.title)}</h1>
+      <div class="detail-meta">
+        <span class="${typeInfo[0].startsWith('badge') ? typeInfo[0] : ''}" style="${typeInfo[0].startsWith('badge') ? '' : 'font-size:.72rem;padding:.15rem .5rem;border-radius:999px;'+typeInfo[0]}">${typeInfo[1]}</span>
+        ${cat ? `<span><i class="bi bi-folder"></i> ${cat.name}</span>` : ''}
+        ${verifiedText ? `<span><i class="bi bi-check-circle"></i> 最后核验：${verifiedText}</span>` : ''}
+        <span><i class="bi bi-eye"></i> ${q.view_count} 次浏览</span>
+      </div>
+    </header>
+
+    ${isExpired ? '<div class="alert alert-warning d-flex align-items-center gap-2 mb-3"><i class="bi bi-exclamation-triangle-fill"></i> 该信息较长时间未核验，请结合学校最新通知确认</div>' : ''}
+
+    <div class="answer-card answer-card-short">
+      <div class="card-label">简短答案</div>
+      <p class="mb-0" style="font-size:1rem;">${escHtml(q.short_answer)}</p>
+    </div>
+
+    ${q.detailed_answer ? `
+    <div class="answer-card">
+      <div class="card-label">详细解答</div>
+      <div class="detailed-content markdown-body">${mdHtml}</div>
+    </div>` : ''}
+
+    ${q.source_name ? `
+    <div class="source-info mb-3">
+      <i class="bi bi-info-circle"></i> 来源：
+      ${q.source_url ? `<a href="${escHtml(q.source_url)}" target="_blank" rel="noopener">${escHtml(q.source_name)} <i class="bi bi-box-arrow-up-right"></i></a>` : escHtml(q.source_name)}
+    </div>` : ''}
+
+    ${q.keywords ? `
+    <div class="mb-3">
+      ${q.keywords.split(/\s+/).filter(Boolean).map(k => `<a href="#/search?q=${encodeURIComponent(k)}" class="keyword-tag">#${escHtml(k)}</a>`).join('')}
+    </div>` : ''}
+  </article>
+
+  <div class="feedback-box">
+    <div class="fb-title">这条内容对你有帮助吗？</div>
+    <div class="d-flex justify-content-center gap-3">
+      <button class="btn btn-helpful" onclick="this.closest('.feedback-box').querySelector('.fb-title').innerHTML='<i class=bi bi-check-circle-fill></i> 感谢你的反馈！'"><i class="bi bi-hand-thumbs-up"></i> 有帮助</button>
+      <button class="btn btn-unhelpful" onclick="this.closest('.feedback-box').querySelector('.fb-title').innerHTML='<i class=bi bi-check-circle-fill></i> 感谢你的反馈！'"><i class="bi bi-hand-thumbs-down"></i> 没有帮助</button>
+    </div>
+  </div>
+
+  ${related.length ? `
+  <div class="related-section">
+    <div class="section-title"><i class="bi bi-link-45deg"></i> 相关问题</div>
+    ${related.map(r => `<a href="#/question/${r.id}" class="related-item">${escHtml(r.title)}</a>`).join('')}
+  </div>` : ''}
+</div>`;
+}
+
+// ---- Render: About ----
+function renderAbout(app) {
+  const stats = getStats();
+  app.innerHTML = `
+<div class="container py-4" style="max-width:720px;">
+  <h1 class="h4 fw-bold mb-4">关于与免责声明</h1>
+
+  <div class="card-plain">
+    <h2><i class="bi bi-info-circle text-primary me-2"></i>关于本站</h2>
+    <p class="text-secondary mb-0" style="font-size:.9rem;">SWUST 新生指南是一个面向西南科技大学新生的信息检索平台，帮助新生快速找到入学、学习、生活等常见问题的答案。内容由管理员整理自学校官方信息和学长学姐经验分享。本站为个人独立运营，并非学校官方系统。</p>
+  </div>
+
+  <div class="card-plain">
+    <h2><i class="bi bi-shield-exclamation text-warning me-2"></i>免责声明</h2>
+    <ul class="text-secondary mb-0" style="font-size:.9rem;">
+      <li>本站内容仅供参考，以学校官方最新通知为准</li>
+      <li>涉及时间、费用、政策等关键信息，请通过学校官方渠道核实</li>
+      <li>"学长学姐经验"类内容属于个人经验分享，不代表学校立场</li>
+      <li>本站对因使用本站内容产生的后果不承担责任</li>
+    </ul>
+  </div>
+
+  <div class="card-plain">
+    <h2><i class="bi bi-shield-check text-success me-2"></i>隐私说明</h2>
+    <ul class="text-secondary mb-0" style="font-size:.9rem;">
+      <li><strong>不会收集</strong>：姓名、手机号、身份证号、学号等个人敏感信息</li>
+      <li><strong>会自动记录</strong>：搜索关键词、时间、浏览行为，仅用于改进内容</li>
+      <li><strong>IP 地址</strong>：仅用于基础统计，不与个人身份关联</li>
+      <li>不使用 Cookies 进行用户追踪或广告投放</li>
+    </ul>
+  </div>
+
+  <div class="card-plain text-center">
+    <div class="row g-3">
+      <div class="col-4">
+        <div class="fw-bold" style="font-size:1.5rem;color:var(--primary);">${stats.total_published}</div>
+        <small class="text-secondary">已整理问题</small>
+      </div>
+      <div class="col-4">
+        <div class="fw-bold" style="font-size:1.5rem;color:var(--primary);">${stats.total_searches}+</div>
+        <small class="text-secondary">总搜索次数</small>
+      </div>
+      <div class="col-4">
+        <div class="fw-bold" style="font-size:1.5rem;color:var(--primary);">${stats.total_helpful}+</div>
+        <small class="text-secondary">有帮助反馈</small>
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+// ---- Render: Submit ----
+function renderSubmit(app) {
+  app.innerHTML = `
+<div class="container py-4" style="max-width:600px;">
+  <h1 class="h4 fw-bold mb-4">提交问题</h1>
+  <div class="card-plain">
+    <p class="text-secondary">没找到你想问的问题？本项目为静态展示版，暂时不支持在线提交。你可以通过以下方式反馈：</p>
+    <ul class="text-secondary">
+      <li>在 GitHub 提 Issue：<a href="https://github.com/PQX-666/swuststudentsqanda/issues" target="_blank" rel="noopener">PQX-666/swuststudentsqanda</a></li>
+    </ul>
+  </div>
+</div>`;
+}
+
+// ---- Helpers ----
+function catName(catId) {
+  const c = DATA.categories.find(x => x.id === catId);
+  return c ? c.name : '';
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function mdToHtml(md) {
+  if (!md) return '';
+  if (typeof marked !== 'undefined') {
+    marked.setOptions({ breaks: false });
+    return marked.parse(md);
+  }
+  return escHtml(md).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+}
+
+// ---- Start ----
+init();
+</script>
+</body>
+</html>
