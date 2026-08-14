@@ -1,0 +1,18 @@
+{
+    "description":  "西南科技大学2026级新生实用导航",
+    "short_name":  "西科新生指南",
+    "background_color":  "#f6f8f4",
+    "icons":  [
+                  {
+                      "purpose":  "any maskable",
+                      "type":  "image/svg+xml",
+                      "sizes":  "any",
+                      "src":  "/swuststudentsqanda/freshman-guide/favicon.svg"
+                  }
+              ],
+    "theme_color":  "#12233f",
+    "display":  "standalone",
+    "name":  "西科新生指南 2026",
+    "scope":  "/swuststudentsqanda/freshman-guide/",
+    "start_url":  "/swuststudentsqanda/freshman-guide/"
+}
