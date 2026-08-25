@@ -1,5 +1,5 @@
 const CACHE = "swust-guide-2026-github-v1";
-const BASE = "/swuststudentsqanda/freshman-guide/";
+const BASE = "/swuststudentsqanda/";
 const CORE = [BASE, BASE + "manifest.webmanifest", BASE + "favicon.svg"];
 
 async function cachePageAndAssets() {
