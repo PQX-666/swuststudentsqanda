@@ -7,12 +7,12 @@
                       "purpose":  "any maskable",
                       "type":  "image/svg+xml",
                       "sizes":  "any",
-                      "src":  "/swuststudentsqanda/favicon.svg"
+                      "src":  "/swuststudentsqanda/freshman-guide/favicon.svg"
                   }
               ],
     "theme_color":  "#12233f",
     "display":  "standalone",
     "name":  "西科新生指南 2026",
-    "scope":  "/swuststudentsqanda/",
-    "start_url":  "/swuststudentsqanda/"
+    "scope":  "/swuststudentsqanda/freshman-guide/",
+    "start_url":  "/swuststudentsqanda/freshman-guide/"
 }
